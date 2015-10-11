@@ -1,0 +1,35 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace 桌面小工具草稿
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+
+            string 硬盘温度 = "MSStorageDriver_ATAPISmartData";
+            string CPU温度 = "MSAcpi_ThermalZoneTemperature";
+
+            Double 温度 = 0;
+
+            ManagementObjectSearcher mos = new ManagementObjectSearcher(@"root\WMI", "Select * From " + CPU温度);
+            foreach (System.Management.ManagementObject mo in mos.Get())
+            {
+                温度 = Convert.ToDouble(Convert.ToDouble(mo.GetPropertyValue("CurrentTemperature").ToString()) - 2732) / 10;
+                Console.WriteLine("CPU温度 : " + 温度.ToString() + " °C");
+            }
+
+            mos.Query = new ObjectQuery("Select * From " + 硬盘温度);
+            foreach (System.Management.ManagementObject mo in mos.Get())
+            {
+                byte[] data = (byte[])mo.GetPropertyValue("VendorSpecific");
+                Console.WriteLine("硬盘温度：" + data[3] + " °C");
+            }
+
+        }
+    }
+}

@@ -1,0 +1,119 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.IO;
+using System.Net;
+using mshtml;
+using System.Threading;
+
+
+namespace WindowsFormsApplication16
+{
+    public partial class Form1 : Form
+    {
+        private IHTMLTxtRange searchRange = null;
+
+        public Form1()
+        {
+
+            InitializeComponent();
+            webBrowser1.Navigate("http://www.taobao.com");
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+
+        {
+            string a;
+            a = textBox1.Text;
+            HtmlElementCollection elems = webBrowser1.Document.GetElementsByTagName("INPUT");
+            foreach (HtmlElement elem in elems)
+            {
+                if (elem.GetAttribute("name").ToString() == "q")
+                    elem.SetAttribute("value", a);
+            }
+
+            HtmlElementCollection elems1 = webBrowser1.Document.GetElementsByTagName("BUTTON");
+            foreach (HtmlElement elem in elems1)
+            {
+                if (elem.GetAttribute("type").ToString() == "submit")
+                    elem.InvokeMember("click");
+
+            }
+            yanshi();
+
+        }
+
+
+        void yanshi()
+        {
+
+            timer1.Tick += new EventHandler(timer1_Tick);
+            timer1.Interval = 10000;
+            timer1.Enabled = true;
+
+
+        }
+
+        void timer1_Tick(object sender, EventArgs e)
+        {
+            sousuo();
+            timer1.Stop();
+            timer1.Enabled = false;
+        }
+
+        private void sousuo()
+        {
+            //Document的DomDocument属性，就是该对象内部的COM对象。 
+
+            IHTMLDocument2 document = (IHTMLDocument2)webBrowser1.Document.DomDocument;
+            string keyword = txtKeyword.Text.Trim();
+            if (keyword == "")
+                return;
+
+            // IE的查找逻辑就是，如果有选区，就从当前选区开头+1字符处开始查找；没有的话就从页面最初开始查找。 
+            // 这个逻辑其实是有点不大恰当的，我们这里不用管，和IE一致即可。 
+            if (document.selection.type.ToLower() != "none")
+            {
+                searchRange = (IHTMLTxtRange)document.selection.createRange();
+                searchRange.collapse(true);
+                searchRange.moveStart("character", 1);
+            }
+            else
+            {
+                IHTMLBodyElement body = (IHTMLBodyElement)document.body;
+                searchRange = (IHTMLTxtRange)body.createTextRange();
+            }
+
+            // 如果找到了，就选取（高亮显示）该关键字；否则弹出消息。 
+            if (searchRange.findText(keyword, 1, 0))
+            {
+                searchRange.select();
+                MessageBox.Show("zhaodao");
+            }
+            else
+            {
+                HtmlElementCollection elems1 = webBrowser1.Document.GetElementsByTagName("SPAN");
+                foreach (HtmlElement elem in elems1)
+                {
+                    if (elem.GetAttribute("classname") == "icon-btn-next-2")
+                        elem.InvokeMember("click");
+                    timer1.Stop();
+                    timer1.Enabled = false;
+                }
+                this.yanshi();
+
+            }
+
+        }
+
+
+
+    }
+
+}
